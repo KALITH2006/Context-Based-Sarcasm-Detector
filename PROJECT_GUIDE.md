@@ -93,3 +93,29 @@ If your friend just wants to *use* the app and doesn't want to install Python, N
     docker run -p 3000:3000 sarcasm-app
     ```
     This single command downloads an isolated mini-computer, installs everything internally, and instantly hosts your beautiful app on `localhost:3000` on their computer without them ever seeing an error.
+
+---
+
+## 🌐 5. Deployment Workflow & Troubleshooting
+
+Here is the exact step-by-step workflow we used to deploy the application to the internet, including the issues we ran into and how we solved them.
+
+### Step 1: Push Code to GitHub
+We initialized a Git repository, committed all files, and pushed to GitHub.
+*   **Mistake:** The `frontend` folder was accidentally acting as a "Git Submodule" because Next.js creates a hidden `.git` folder inside it during initialization. This caused Vercel to not be able to see the frontend code.
+*   **Fix:** We deleted the hidden `frontend/.git` folder, removed the submodule reference from the main repo using `git rm --cached frontend`, and re-added the folder as normal code.
+
+### Step 2: Deploy Backend to Render
+We connected our GitHub repository to Render as a "Web Service" to host the Python API.
+*   **Mistake 1:** Render tried to install the absolute newest pre-release version of Python (3.14.3). Because this version is experimental, the massive `pandas` and `scikit-learn` libraries couldn't compile correctly, resulting in an "Out of Memory / subprocess-exited-with-error" crash.
+*   **Fix 1:** We went into Render's Environment Variables and added `PYTHON_VERSION=3.11.8` to force Render to use a stable, standard Python version, which fixed the compiling crash instantly.
+*   **Mistake 2:** Our `requirements.txt` asked for the latest version of `pytest` (8.0.0), but the testing library `pytest-asyncio` strictly required an older version (`<8.0.0`), causing a dependency conflict during `pip install`.
+*   **Fix 2:** We downgraded `pytest==7.4.4` in our `requirements.txt` and pushed the fix to GitHub. Render automatically rebuilt and succeeded!
+
+### Step 3: Deploy Frontend to Vercel
+We connected our GitHub repository to Vercel.
+*   **Setup:** We set the Root Directory to `frontend`.
+*   **Connection:** We grabbed the live API URL from Render (e.g., `https://context-based-sarcasm....onrender.com`) and added it to Vercel as an Environment Variable named `NEXT_PUBLIC_API_URL`.
+*   **Mistake:** We got a "Failed to fetch" error on the live Vercel site. This was a CORS (Cross-Origin Resource Sharing) block. The backend FastAPI server was strictly configured to only accept requests from `http://localhost:3000`, blocking the new `vercel.app` domain.
+*   **Fix:** We updated `backend/main.py`'s `CORSMiddleware` to `allow_origins=["*"]` (allowing all domains) and pushed to GitHub. Render rebuilt the backend, and the frontend could successfully talk to it!
+*   **Result:** Vercel automatically built and deployed the Next.js frontend. Now, when a user clicks the "Detect Sarcasm" button on the Vercel internet site, the frontend securely requests the AI analysis from the Render backend, providing a seamless full-stack deployment!
