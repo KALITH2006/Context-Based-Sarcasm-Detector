@@ -116,6 +116,8 @@ We connected our GitHub repository to Render as a "Web Service" to host the Pyth
 We connected our GitHub repository to Vercel.
 *   **Setup:** We set the Root Directory to `frontend`.
 *   **Connection:** We grabbed the live API URL from Render (e.g., `https://context-based-sarcasm....onrender.com`) and added it to Vercel as an Environment Variable named `NEXT_PUBLIC_API_URL`.
-*   **Mistake:** We got a "Failed to fetch" error on the live Vercel site. This was a CORS (Cross-Origin Resource Sharing) block. The backend FastAPI server was strictly configured to only accept requests from `http://localhost:3000`, blocking the new `vercel.app` domain.
-*   **Fix:** We updated `backend/main.py`'s `CORSMiddleware` to `allow_origins=["*"]` (allowing all domains) and pushed to GitHub. Render rebuilt the backend, and the frontend could successfully talk to it!
+*   **Mistake 1 (CORS Block):** We got a "Failed to fetch" error on the live Vercel site. This was a CORS (Cross-Origin Resource Sharing) block. The backend FastAPI server was strictly configured to only accept requests from `http://localhost:3000`, blocking the new `vercel.app` domain.
+*   **Fix 1:** We updated `backend/main.py`'s `CORSMiddleware` to `allow_origins=["*"]` (allowing all domains) and pushed to GitHub.
+*   **Mistake 2 (Render Cache):** Even after pushing the CORS fix to GitHub, Vercel *still* showed the "Failed to fetch" error. This was because Render sometimes caches previous successful GitHub builds and doesn't instantly pull the newest commit.
+*   **Fix 2:** We had to go into the Render dashboard, click **Manual Deploy**, and select **Clear build cache & deploy** to force Render to actually pull and build the newest code. Once Render finished building the final update, Vercel successfully connected!
 *   **Result:** Vercel automatically built and deployed the Next.js frontend. Now, when a user clicks the "Detect Sarcasm" button on the Vercel internet site, the frontend securely requests the AI analysis from the Render backend, providing a seamless full-stack deployment!
