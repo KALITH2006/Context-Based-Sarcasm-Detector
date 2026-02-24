@@ -24,7 +24,6 @@
 * [Docker](#-docker)
 * [Deployment](#-deployment)
 * [Testing](#-testing)
-* [Future Improvements](#-future-improvements)
 
 ---
 
@@ -344,3 +343,4 @@ npm run build
 ```
 
 ---
+
